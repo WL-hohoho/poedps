@@ -1,6 +1,6 @@
 <html>
 <head>
-<script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
 <style>
 div#inputdiv {
 	width: 60%;
@@ -24,10 +24,13 @@ div#result strong.value {
 </head>
 <body>
 
+<h3>Path of Exile Item DPS Calculator</h3>
+
 <div id="result">
 	<p>Item DPS:</p>
 	<div id="pdps"><strong class="value">0</strong> Physical Damage per Second</div>
 	<div id="edps"><strong class="value">0</strong> Elemental Damage per Second</div>
+	<div id="tdps"><strong class="value">0</strong> Total Damage per Second</div>
 </div>
 
 <div id="inputdiv">
@@ -35,6 +38,14 @@ div#result strong.value {
 	<textarea id="itemtext"></textarea>
 	<button id="calculateBtn">Calculate</button>
 </div>
+
+<footer>
+	<p>Technical information:</p>
+	<p>
+		The DPS is calculated with the formula: <em>((min damage + max damage) / 2) * aps</em>.<br />
+		Critical chance, passive skills or any other information is <strong>not</strong> considered for this calculation.
+	</p>
+</footer>
 
 <script>
 function avg(min, max, speed) {
@@ -83,9 +94,11 @@ function calculate(info) {
 	
 	item['pdps'] = Math.round(item['pdps'] * 100) / 100;
 	item['edps'] = Math.round(item['edps'] * 100) / 100;
+	var tdps = Math.round((item['pdps'] + item['edps']) * 100) / 100;
 	
 	$('#result > #pdps > strong.value').html(item['pdps'].toString());
 	$('#result > #edps > strong.value').html(item['edps'].toString());
+	$('#result > #tdps > strong.value').html(tdps.toString());
 }
 
 $(document).ready(function() {
