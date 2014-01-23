@@ -1,0 +1,103 @@
+<html>
+<head>
+<script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+<style>
+div#inputdiv {
+	width: 60%;
+}
+
+textarea#itemtext {
+	display: block;
+	width: 100%;
+	height: 500px;
+}
+
+div#result {
+	float: right;
+	width: 30%;
+}
+
+div#result strong.value {
+	font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<div id="result">
+	<p>Item DPS:</p>
+	<div id="pdps"><strong class="value">0</strong> Physical Damage per Second</div>
+	<div id="edps"><strong class="value">0</strong> Elemental Damage per Second</div>
+</div>
+
+<div id="inputdiv">
+	Paste the item info here ( hover the Mouse over a Weapon and press Control-C to copy the item information ):
+	<textarea id="itemtext"></textarea>
+	<button id="calculateBtn">Calculate</button>
+</div>
+
+<script>
+function avg(min, max, speed) {
+	return ((parseInt(min) + parseInt(max)) / 2) * speed;
+}
+
+function parseItem(text) {
+	var item = {
+		'pdmg': {
+			'min': 0,
+			'max': 0
+		},
+		'edmg': [],
+		'aps': 1.0
+	};
+	
+	var patternDamage = /([0-9]+)-([0-9]+)/i;
+	var patternPDMG = /Physical Damage: ([^\n]+)/i;
+	var patternEDMG = /Elemental Damage: ([^\n]+)/i;
+	var patternAPS = /Attacks per Second: ([0-9\.]+)/i;
+	
+	var strPDMG = text.match(patternPDMG);
+	var pdmg = strPDMG[1].match(patternDamage);
+	item['pdmg']['min'] = parseInt(pdmg[1]);
+	item['pdmg']['max'] = parseInt(pdmg[2]);
+	
+	var strEDMG = text.match(patternEDMG)[1];
+	$.each(strEDMG.split(','), function(index, value) {
+		var edmg = value.match(patternDamage);
+		item['edmg'].push({'min': parseInt(edmg[1]), 'max': parseInt(edmg[2])});
+	});
+	
+	item['aps'] = parseFloat(text.match(patternAPS)[1]);
+	return item;
+}
+
+function calculate(info) {
+	var item = parseItem(info);
+	
+	item['pdps'] = avg(item['pdmg']['min'], item['pdmg']['max'], item['aps']);
+	item['edps'] = 0;
+	
+	$.each(item['edmg'], function(index, value) {
+		item['edps'] += avg(value['min'], value['max'], item['aps']);
+	});
+	
+	item['pdps'] = Math.round(item['pdps'] * 100) / 100;
+	item['edps'] = Math.round(item['edps'] * 100) / 100;
+	
+	$('#result > #pdps > strong.value').html(item['pdps'].toString());
+	$('#result > #edps > strong.value').html(item['edps'].toString());
+}
+
+$(document).ready(function() {
+	$('#itemtext').bind('paste', null, function(e) {
+		// currently not working on (older versions only ?) IE
+		calculate(e.originalEvent.clipboardData.getData('text/plain'));
+	});
+	
+	$('#calculateBtn').bind('click', function(e) {
+		calculate($('#itemtext').val());
+	});
+});
+</script>
+</body>
+</html>
