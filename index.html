@@ -1,116 +1,122 @@
+<!doctype html>
 <html>
 <head>
-<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
-<style>
-div#inputdiv {
-	width: 60%;
-}
+	<title>Path of Exile DPS Calculator</title>
+	<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+	<style>
+		div#inputdiv {
+			width: 60%;
+		}
 
-textarea#itemtext {
-	display: block;
-	width: 100%;
-	height: 500px;
-}
+		textarea#itemtext {
+			display: block;
+			width: 100%;
+			height: 500px;
+		}
 
-div#result {
-	float: right;
-	width: 30%;
-}
+		div#result {
+			float: right;
+			width: 30%;
+		}
 
-div#result strong.value {
-	font-weight: bold;
-}
-</style>
+		div#result strong.value {
+			font-weight: bold;
+		}
+	</style>
 </head>
 <body>
+	<h3>Path of Exile Item DPS Calculator</h3>
 
-<h3>Path of Exile Item DPS Calculator</h3>
+	<div id="result">
+		<p>Item DPS:</p>
+		<div id="pdps"><strong class="value">0</strong> Physical Damage per Second</div>
+		<div id="edps"><strong class="value">0</strong> Elemental Damage per Second</div>
+		<div id="tdps"><strong class="value">0</strong> Total Damage per Second</div>
+	</div>
 
-<div id="result">
-	<p>Item DPS:</p>
-	<div id="pdps"><strong class="value">0</strong> Physical Damage per Second</div>
-	<div id="edps"><strong class="value">0</strong> Elemental Damage per Second</div>
-	<div id="tdps"><strong class="value">0</strong> Total Damage per Second</div>
-</div>
+	<div id="inputdiv">
+		Paste the item information here:
+		<textarea id="itemtext"></textarea>
+		<button id="calculateBtn">Calculate</button>
+	</div>
 
-<div id="inputdiv">
-	Paste the item info here ( hover the Mouse over a Weapon and press Control-C to copy the item information ):
-	<textarea id="itemtext"></textarea>
-	<button id="calculateBtn">Calculate</button>
-</div>
+	<div>
+		<h4>How to use:</h4>
+		In Path of Exile, hover the mouse over a item and press <em>Control+C</em>.<br />
+		Then paste ( <em>Control+V</em> ) the contents of your clipboard into the box above.<br />
+		The calculated DPS can be read on the right side next to the input box.
+	</div>
 
-<footer>
-	<p>Technical information:</p>
-	<p>
+	<div>
+		<h4>Technical information:</h4>
 		The DPS is calculated with the formula: <em>((min damage + max damage) / 2) * aps</em>.<br />
 		Critical chance, passive skills or any other information is <strong>not</strong> considered for this calculation.
-	</p>
-</footer>
+	</div>
 
-<script>
-function avg(min, max, speed) {
-	return ((parseInt(min) + parseInt(max)) / 2) * speed;
-}
+	<script>
+		function avg(min, max, speed) {
+			return ((parseInt(min) + parseInt(max)) / 2) * speed;
+		}
 
-function parseItem(text) {
-	var item = {
-		'pdmg': {
-			'min': 0,
-			'max': 0
-		},
-		'edmg': [],
-		'aps': 1.0
-	};
-	
-	var patternDamage = /([0-9]+)-([0-9]+)/i;
-	var patternPDMG = /Physical Damage: ([^\n]+)/i;
-	var patternEDMG = /Elemental Damage: ([^\n]+)/i;
-	var patternAPS = /Attacks per Second: ([0-9\.]+)/i;
-	
-	var strPDMG = text.match(patternPDMG);
-	var pdmg = strPDMG[1].match(patternDamage);
-	item['pdmg']['min'] = parseInt(pdmg[1]);
-	item['pdmg']['max'] = parseInt(pdmg[2]);
-	
-	var strEDMG = text.match(patternEDMG)[1];
-	$.each(strEDMG.split(','), function(index, value) {
-		var edmg = value.match(patternDamage);
-		item['edmg'].push({'min': parseInt(edmg[1]), 'max': parseInt(edmg[2])});
-	});
-	
-	item['aps'] = parseFloat(text.match(patternAPS)[1]);
-	return item;
-}
+		function parseItem(text) {
+			var item = {
+				'pdmg': {
+					'min': 0,
+					'max': 0
+				},
+				'edmg': [],
+				'aps': 1.0
+			};
+			
+			var patternDamage = /([0-9]+)-([0-9]+)/i;
+			var patternPDMG = /Physical Damage: ([^\n]+)/i;
+			var patternEDMG = /Elemental Damage: ([^\n]+)/i;
+			var patternAPS = /Attacks per Second: ([0-9\.]+)/i;
+			
+			var strPDMG = text.match(patternPDMG);
+			var pdmg = strPDMG[1].match(patternDamage);
+			item['pdmg']['min'] = parseInt(pdmg[1]);
+			item['pdmg']['max'] = parseInt(pdmg[2]);
+			
+			var strEDMG = text.match(patternEDMG)[1];
+			$.each(strEDMG.split(','), function(index, value) {
+				var edmg = value.match(patternDamage);
+				item['edmg'].push({'min': parseInt(edmg[1]), 'max': parseInt(edmg[2])});
+			});
+			
+			item['aps'] = parseFloat(text.match(patternAPS)[1]);
+			return item;
+		}
 
-function calculate(info) {
-	var item = parseItem(info);
-	
-	item['pdps'] = avg(item['pdmg']['min'], item['pdmg']['max'], item['aps']);
-	item['edps'] = 0;
-	
-	$.each(item['edmg'], function(index, value) {
-		item['edps'] += avg(value['min'], value['max'], item['aps']);
-	});
-	
-	item['pdps'] = Math.round(item['pdps'] * 100) / 100;
-	item['edps'] = Math.round(item['edps'] * 100) / 100;
-	var tdps = Math.round((item['pdps'] + item['edps']) * 100) / 100;
-	
-	$('#result > #pdps > strong.value').html(item['pdps'].toString());
-	$('#result > #edps > strong.value').html(item['edps'].toString());
-	$('#result > #tdps > strong.value').html(tdps.toString());
-}
+		function calculate(info) {
+			var item = parseItem(info);
+			
+			item['pdps'] = avg(item['pdmg']['min'], item['pdmg']['max'], item['aps']);
+			item['edps'] = 0;
+			
+			$.each(item['edmg'], function(index, value) {
+				item['edps'] += avg(value['min'], value['max'], item['aps']);
+			});
+			
+			item['pdps'] = Math.round(item['pdps'] * 100) / 100;
+			item['edps'] = Math.round(item['edps'] * 100) / 100;
+			var tdps = Math.round((item['pdps'] + item['edps']) * 100) / 100;
+			
+			$('#result > #pdps > strong.value').html(item['pdps'].toString());
+			$('#result > #edps > strong.value').html(item['edps'].toString());
+			$('#result > #tdps > strong.value').html(tdps.toString());
+		}
 
-$(document).ready(function() {
-	$('#itemtext').bind('paste', null, function(e) {
-		// currently not working on (older versions only ?) IE
-		calculate(e.originalEvent.clipboardData.getData('text/plain'));
-	});
-	
-	$('#calculateBtn').bind('click', function(e) {
-		calculate($('#itemtext').val());
-	});
-});
-</script>
-</body>
+		$(document).ready(function() {
+			$('#itemtext').bind('paste', null, function(e) {
+				// right now only tested it on firefox
+				calculate(e.originalEvent.clipboardData.getData('text/plain'));
+			});
+			
+			$('#calculateBtn').bind('click', function(e) {
+				calculate($('#itemtext').val());
+			});
+		});
+	</script>
+	</body>
 </html>
