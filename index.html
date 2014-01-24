@@ -72,19 +72,28 @@
 			var patternPDMG = /Physical Damage: ([^\n]+)/i;
 			var patternEDMG = /Elemental Damage: ([^\n]+)/i;
 			var patternAPS = /Attacks per Second: ([0-9\.]+)/i;
+			var matches = null;
 			
-			var strPDMG = text.match(patternPDMG);
-			var pdmg = strPDMG[1].match(patternDamage);
-			item['pdmg']['min'] = parseInt(pdmg[1]);
-			item['pdmg']['max'] = parseInt(pdmg[2]);
+			var matches = text.match(patternPDMG);
+			if(matches != null) {
+				var pdmg = matches[1].match(patternDamage);
+				item['pdmg']['min'] = parseInt(pdmg[1]);
+				item['pdmg']['max'] = parseInt(pdmg[2]);
+			}
 			
-			var strEDMG = text.match(patternEDMG)[1];
-			$.each(strEDMG.split(','), function(index, value) {
-				var edmg = value.match(patternDamage);
-				item['edmg'].push({'min': parseInt(edmg[1]), 'max': parseInt(edmg[2])});
-			});
+			matches = text.match(patternEDMG);
+			if(matches != null) {
+				var strEDMG = matches[1];
+				$.each(strEDMG.split(','), function(index, value) {
+					var edmg = value.match(patternDamage);
+					item['edmg'].push({'min': parseInt(edmg[1]), 'max': parseInt(edmg[2])});
+				});
+			}
 			
-			item['aps'] = parseFloat(text.match(patternAPS)[1]);
+			matches = text.match(patternAPS);
+			if(matches != null) {
+				item['aps'] = parseFloat(matches[1]);
+			}
 			return item;
 		}
 
